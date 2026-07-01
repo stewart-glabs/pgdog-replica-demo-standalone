@@ -1,0 +1,40 @@
+[general]
+host = "0.0.0.0"
+port = 6432
+
+# Send everything to the primary unless a query explicitly opts into the replica
+# (via the pgdog.role=replica startup option carried on the TypeORM slave pool URL).
+read_write_split = "prefer_primary"
+
+# Replica lag / health (values requested for this test).
+lsn_check_delay = 0            # start LSN checks immediately
+lsn_check_interval = 1000      # check replica LSN every 1s
+ban_replica_lag = 7_000        # ban a replica lagging > 7s
+ban_replica_lag_bytes = 100        
+healthcheck_interval = 30_000
+idle_healthcheck_delay = 5_000
+healthcheck_timeout = 5_000
+idle_healthcheck_interval = 30_000
+ban_timeout = 300_000          # 5 minutes
+
+# Admin database for SHOW REPLICATION / SHOW POOLS etc.
+# Connect: psql "postgresql://admin:admindebug@127.0.0.1:26432/admin"
+[admin]
+name = "admin"
+user = "admin"
+password = "admindebug"
+
+# One logical database "notability" backed by a primary and a replica.
+[[databases]]
+name = "notability"
+host = "primary"
+port = 5432
+role = "primary"
+shard = 0
+
+[[databases]]
+name = "notability"
+host = "replica"
+port = 5432
+role = "replica"
+shard = 0

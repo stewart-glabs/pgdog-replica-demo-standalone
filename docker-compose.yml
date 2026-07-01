@@ -1,0 +1,84 @@
+name: pgdog-replica-demo-standalone
+
+services:
+  primary:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: notability
+      POSTGRES_PASSWORD: notability
+      POSTGRES_DB: notability
+    ports:
+      - "127.0.0.1:25432:5432" # host access for debugging (distinct ports so this can coexist with the main demo)
+    volumes:
+      - ./pg_hba.conf:/etc/pg_hba.conf:ro
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/pg_hba.conf
+      - -c
+      - listen_addresses=*
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - hot_standby=on
+      - -c
+      - cluster_name=primary
+      - -c
+      - log_statement=all
+      - -c
+      - log_line_prefix=%m [%p] [primary]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notability -d notability"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  replica:
+    image: postgres:17
+    entrypoint: ["/bin/bash", "/replica-entrypoint.sh"]
+    environment:
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:25434:5432" # host access for debugging
+    volumes:
+      - ./pg_hba.conf:/etc/pg_hba.conf:ro
+      - ./replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/pg_hba.conf
+      - -c
+      - listen_addresses=*
+      - -c
+      - hot_standby=on
+      - -c
+      - cluster_name=replica
+      - -c
+      - log_statement=all
+      - -c
+      - log_line_prefix=%m [%p] [replica]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notability -d notability"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  pgdog:
+    image: ghcr.io/pgdogdev/pgdog:v0.1.46
+    environment:
+      RUST_LOG: "${RUST_LOG:-debug}" # debug so `query router decision` lines are emitted
+    ports:
+      - "127.0.0.1:26432:6432"
+    volumes:
+      - ./pgdog.toml:/etc/pgdog/pgdog.toml:ro
+      - ./users.toml:/etc/pgdog/users.toml:ro
+    command: ["/usr/local/bin/pgdog", "--config", "/etc/pgdog/pgdog.toml", "--users", "/etc/pgdog/users.toml"]
+    depends_on:
+      primary:
+        condition: service_healthy
+      replica:
+        condition: service_healthy

@@ -1,0 +1,14 @@
+{
+  "name": "pgdog-replica-demo-standalone",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "pg": "8.20.0",
+    "typeorm": "0.3.30"
+  }
+}
