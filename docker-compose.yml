@@ -69,6 +69,7 @@ services:
 
   pgdog:
     image: pgdog:levkk-fix-replica-lag
+    # image: ghcr.io/pgdogdev/pgdog:v0.1.46
     environment:
       RUST_LOG: "${RUST_LOG:-debug}" # debug so `query router decision` lines are emitted
     ports:
