@@ -1,7 +1,6 @@
 # pgdog read-replica opt-in demo — standalone
 
-Self-contained version of `../pgdog-replica-demo`. Proves per-query opt-in to a read replica
-through pgdog (`read_write_split = prefer_primary`) 
+A demo which proves per-query opt-in to a read replica through pgdog (`read_write_split = prefer_primary`). It also contains tests which repreducing lag and healthcheck replica banning which are used to find bugs in pgdog.
 
 - The DataSource plumbing (`initializeDatabaseConnection`, `getDataSource`, `getReadEntityManager`,
   `buildTypeormConfig`) is vendored in [`src/db.ts`](src/db.ts).
@@ -11,10 +10,12 @@ through pgdog (`read_write_split = prefer_primary`)
 It still uses the `typeorm` and `pg` packages, resolved from `Backend/node_modules`, so run the
 bun scripts from the `Backend/` directory (as `run.sh` does).
 
+## Setup
+You need `bun`, and docker compose installed.
+
 ## Topology
 
-Physical streaming standby, all in Docker on `127.0.0.1`, with distinct ports so this can run
-alongside the main demo: **25432** (primary), **25434** (replica), **26432** (pgdog). Project name
+Physical streaming standby, all in Docker on `127.0.0.1`, with distinct ports so this can run alongside the main demo: **25432** (primary), **25434** (replica), **26432** (pgdog). Project name
 `pgdog-replica-demo-standalone`.
 
 ## Run
